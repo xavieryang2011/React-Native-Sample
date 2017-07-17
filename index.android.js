@@ -1,47 +1,105 @@
-import React,{
+import React, {
   Component,
- } from 'react';
+} from 'react';
 import {
   AppRegistry,
   Image,
   StyleSheet,
   Text,
   View,
+  ListView,
 } from 'react-native';
 
-var MOCKED_MOVIES_DATA = [
-    {title: '标题', year: '2017', posters: {thumbnail: 'http://i.imgur.com/UePbdph.jpg'}},
-];
+var REQUEST_URL = 'https://www.easy-mock.com/mock/596ca423a1d30433d83578dd/react-native-sample/movie/list';
 
 
-export default class sampleAppMovies extends Component{
- render(){
-  var movie=MOCKED_MOVIES_DATA[0];
-  return (
-    <View style={styles.container}>
-      <Text>{movie.title}</Text>
-      <Text>{movie.year}</Text>
-      <Image source={{uri: movie.posters.thumbnail}}
+export default class sampleAppMovies extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      dataSource: new ListView.DataSource({
+        rowHasChanged: (row1, row2) => row1 !== row2,
+      }),
+      loaded: false,
+    };
+    this.fetchData = this.fetchData.bind(this);
+  }
+  componentDidMount() {
+    this.fetchData();
+  }
+  fetchData() {
+    fetch(REQUEST_URL)
+      .then((response) => response.json())
+      .then((responseData) => {
+        this.setState({
+          dataSource: this.state.dataSource.cloneWithRows(responseData.movies),
+          loaded: true,
+        });
+      });
+
+  }
+  render() {
+    if (!this.state.loaded) {
+      return this.renderLoadingView();
+    }
+    return (
+      <ListView dataSource={this.state.dataSource}
+       renderRow={this.renderMovie}
+       style={styles.listView}>
+      </ListView>
+    );
+
+  }
+  renderLoadingView() {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>正在加载中。。。</Text>
+      </View>
+    );
+  }
+  renderMovie(movie) {
+    return (
+      <View style={styles.container}>
+        <Image source={{uri: movie.posters.thumbnail}}
              style={styles.thumbnail}/>
+      <View style={styles.rightContainer}>    
+        <Text style={styles.title}>{movie.title}</Text>
+        <Text style={styles.year}>{movie.year}</Text>
+      </View>
     </View>
     );
- }
+  }
+
 }
 
-var styles=StyleSheet.create({
-   container:{
-      flex:1,
-      justifyContent:'center',
-      alignItems:'center',
-      backgroundColor:'#F5FCFF',
-   },
-   thumbnail:{
-    width:53,
+var styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5FCFF',
+  },
+  rightContainer: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 20,
+    marginBottom: 0,
+    textAlign: 'center',
+  },
+  year: {
+    textAlign: 'center',
+  },
+  thumbnail: {
+    marginLeft: 15,
+    width: 53,
     height: 81,
-   },
+  },
+  listView: {
+    paddingTop: 20,
+    backgroundColor: '#F5FCFF',
+  },
 });
 
-AppRegistry.registerComponent('sampleAppMovies',()=>sampleAppMovies);
-
-
-
+AppRegistry.registerComponent('sampleAppMovies', () => sampleAppMovies);
